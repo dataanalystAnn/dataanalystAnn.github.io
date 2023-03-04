@@ -10,6 +10,66 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 })(window,document,'script','dataLayer','GTM-0000000');</script>
 <!-- End Google Tag Manager -->
 
+<script>
+const mp_session_config = {
+    timeout: 1800000,
+    //safe client-side function for generating session_id
+    //from: https://stackoverflow.com/a/105074
+    get_Session_id: function() {
+        function s4() {
+            return Math.floor((1 + Math.random()) * 0x10000)
+                .toString(16)
+                .substring(1);
+        }
+        return s4()+s4()+'-'+s4()+'-'+s4()+'-'+s4()+'-'+s4()+s4()+s4();
+    },
+  
+    //set a new session id
+    set_Session_id: function() {
+        mixpanel.register({
+            "session ID": mp_session_config.get_Session_id()
+        });
+    },
+
+    //check for a new session id
+    check_Session_id: function() {
+        // check #1 do they have a session already?
+        if (!mixpanel.get_property("last event time")) {
+            mp_session_config.set_Session_id();
+        }
+
+        if (!mixpanel.get_property("session ID")) {
+            mp_session_config.set_Session_id();
+        }
+
+        //check #2 did the last session exceed the timeout?
+        if (Date.now() - mixpanel.get_property("last event time") > mp_session_config.timeout) {
+            mp_session_config.set_Session_id();
+        }
+    }
+}
+
+const your_project_token = 'cd2d33c3545ee2cd680a35df2e3876fc' // my-test-project
+
+mixpanel.init(your_project_token, {
+    loaded: function(mixpanel) {
+        mp_session_config.check_Session_id();
+            const originalTrack = mixpanel.track;
+            mixpanel.track = function() {
+                // console.log('session checked');
+                mp_session_config.check_Session_id();
+                mixpanel.register({"last event time": Date.now()});
+                originalTrack.apply(mixpanel, arguments);
+            }      
+
+        // now write your own mixpanel tracking code, listeners, etc…
+
+}});	
+	
+	
+</script>
+
+
 <div class="posts-list">
   {% for post in paginator.posts %}
   <article class="post-preview">
